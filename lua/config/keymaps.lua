@@ -33,6 +33,8 @@ local function copyToClipBoard()
   print("copied!")
 end
 
+vim.keymap.set("i", "jj", "<ESC>", { silent = true })
+
 local function callVSCodeFunction(vsCodeCommand)
   vim.cmd(vsCodeCommand)
 end
