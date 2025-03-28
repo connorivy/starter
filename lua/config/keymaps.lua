@@ -71,6 +71,10 @@ local function vscodeMappings()
     callVSCodeFunction("call VSCodeNotify('editor.action.referenceSearch.trigger')")
   end, { noremap = true, desc = "peek references inside vs code" })
 
+  map("n", "gy", function()
+    callVSCodeFunction("call VSCodeNotify('editor.action.goToTypeDefinition')")
+  end, { noremap = true, desc = "go to type definition inside vs code" })
+
   map("n", "<leader>sd", function()
     callVSCodeFunction("call VSCodeNotify('workbench.action.problems.focus')")
   end, { noremap = true, desc = "open problems and errors infos" })
