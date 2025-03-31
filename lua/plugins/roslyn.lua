@@ -41,6 +41,10 @@ return {
         config = {
           handlers = require("rzls.roslyn_handlers"),
           settings = {
+            ["csharp|background_analysis"] = {
+              dotnet_analyzer_diagnostics_scope = "fullSolution",
+              dotnet_compiler_diagnostics_scope = "fullSolution",
+            },
             ["csharp|inlay_hints"] = {
               csharp_enable_inlay_hints_for_implicit_object_creation = true,
               csharp_enable_inlay_hints_for_implicit_variable_types = true,
@@ -62,6 +66,46 @@ return {
           },
         },
       })
+
+      vim.keymap.set("n", "<leader>p", function()
+        local clients = vim.lsp.get_clients()
+        for _, value in ipairs(clients) do
+          if value.name == "roslyn" then
+            vim.notify("roslyn client found")
+            value.rpc.request("workspace/diagnostic", { previousResultIds = {} }, function(err, result)
+              if err ~= nil then
+                print(vim.inspect(err))
+              end
+              if result ~= nil then
+                local diags = {}
+                local seen = {}
+                for _, diag in ipairs(result.items) do
+                  local filepath = diag.uri:gsub("file:///", "")
+                  if #diag.items > 0 then
+                    for _, diag_line in ipairs(diag.items) do
+                      if diag_line.severity == 1 then
+                        local hash = diag_line.message .. diag_line.range.start.line .. diag_line.range.start.character
+                        if seen[hash] == nil then
+                          local s = {
+                            text = diag_line.message,
+                            lnum = diag_line.range.start.line,
+                            col = diag_line.range.start.character,
+                            filename = filepath,
+                          }
+                          table.insert(diags, s)
+                          seen[hash] = true
+                        end
+                      end
+                    end
+                  end
+                end
+                vim.fn.setqflist(diags)
+                vim.cmd("copen")
+              end
+            end)
+          end
+        end
+      end, { noremap = true, silent = true })
     end,
     init = function()
       -- we add the razor filetypes before the plugin loads
@@ -74,4 +118,3 @@ return {
     end,
   },
 }
-
